@@ -54,25 +54,21 @@ func getHttp(ctx *fasthttp.RequestCtx) string {
 }
 
 func getRealRemoteIP(ctx *fasthttp.RequestCtx) string {
-	realIP := ctx.Request.Header.Peek("X-Real-IP")
-	if len(realIP) > 0 {
-		ip := net.ParseIP(string(realIP))
-		if ip != nil {
-			if !ip.IsGlobalUnicast() {
-				return ip.String()
-			}
-		}
-	}
 	xForwardedFor := ctx.Request.Header.Peek("X-Forwarded-For")
 	if len(xForwardedFor) != 0 {
 		parts := strings.Split(string(xForwardedFor), ",")
 		if len(parts) != 0 {
 			ip := net.ParseIP(parts[0])
-			if ip != nil {
-				if !ip.IsGlobalUnicast() {
-					return ip.String()
-				}
+			if ip != nil && ip.IsGlobalUnicast() {
+				return ip.String()
 			}
+		}
+	}
+	xRealIP := ctx.Request.Header.Peek("X-Real-IP")
+	if len(xRealIP) > 0 {
+		ip := net.ParseIP(string(xRealIP))
+		if ip != nil && ip.IsGlobalUnicast() {
+			return ip.String()
 		}
 	}
 	return ctx.RemoteIP().String()

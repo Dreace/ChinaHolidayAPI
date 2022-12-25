@@ -44,6 +44,7 @@ func holidayHandler(ctx *fasthttp.RequestCtx) {
 		ctx.SetStatusCode(code)
 		body, _ := json.Marshal(message)
 		ctx.SetBody(body)
+		ctx.SetContentTypeBytes([]byte("application/json"))
 	}()
 
 	date := time.Now()
