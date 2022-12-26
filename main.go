@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/spf13/pflag"
 	"github.com/valyala/fasthttp"
-	"log"
 	"time"
 )
 
@@ -77,12 +76,12 @@ func main() {
 
 	err := json.Unmarshal(holidayData, &holidays)
 	if err != nil {
-		log.Fatalf("%v", err)
+		output.Fatalf("%v", err)
 		return
 	}
-	log.Printf("listen on http://%s:%d", host, port)
+	output.Printf("listen on http://%s:%d", host, port)
 	err = fasthttp.ListenAndServe(fmt.Sprintf("%s:%d", host, port), ShortColored(holidayHandler))
 	if err != nil {
-		log.Fatalf("%v", err)
+		output.Fatalf("%v", err)
 	}
 }

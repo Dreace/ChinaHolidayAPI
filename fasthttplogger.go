@@ -14,7 +14,7 @@ import (
 // https://github.com/AubSs/fasthttplogger
 
 var (
-	output = log.New(os.Stdout, "", 0)
+	output = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
 )
 
 var (
@@ -80,7 +80,7 @@ func getRealRemoteIP(ctx *fasthttp.RequestCtx) string {
 // <method> <url> - <status> - <response-time us>
 // GET / - 200 - 11.925 us
 func Tiny(req fasthttp.RequestHandler) fasthttp.RequestHandler {
-	return fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
+	return func(ctx *fasthttp.RequestCtx) {
 		begin := time.Now()
 		req(ctx)
 		end := time.Now()
@@ -90,12 +90,12 @@ func Tiny(req fasthttp.RequestHandler) fasthttp.RequestHandler {
 			ctx.Response.Header.StatusCode(),
 			end.Sub(begin),
 		)
-	})
+	}
 }
 
 // TinyColored is same as Tiny but colored
 func TinyColored(req fasthttp.RequestHandler) fasthttp.RequestHandler {
-	return fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
+	return func(ctx *fasthttp.RequestCtx) {
 		begin := time.Now()
 		req(ctx)
 		end := time.Now()
@@ -105,14 +105,14 @@ func TinyColored(req fasthttp.RequestHandler) fasthttp.RequestHandler {
 			colorStatus(ctx.Response.Header.StatusCode()),
 			end.Sub(begin),
 		)
-	})
+	}
 }
 
 // Short format:
 // <remote-addr> | <real-remote-ip> | <HTTP/:http-version> | <method> <url> - <status> - <response-time us>
 // 127.0.0.1:53324 | 1.1.1.1 | HTTP/1.1 | GET /hello - 200 - 44.8µs
 func Short(req fasthttp.RequestHandler) fasthttp.RequestHandler {
-	return fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
+	return func(ctx *fasthttp.RequestCtx) {
 		begin := time.Now()
 		req(ctx)
 		end := time.Now()
@@ -125,12 +125,12 @@ func Short(req fasthttp.RequestHandler) fasthttp.RequestHandler {
 			ctx.Response.Header.StatusCode(),
 			end.Sub(begin),
 		)
-	})
+	}
 }
 
 // ShortColored is same as Short but colored
 func ShortColored(req fasthttp.RequestHandler) fasthttp.RequestHandler {
-	return fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
+	return func(ctx *fasthttp.RequestCtx) {
 		begin := time.Now()
 		req(ctx)
 		end := time.Now()
@@ -143,14 +143,14 @@ func ShortColored(req fasthttp.RequestHandler) fasthttp.RequestHandler {
 			colorStatus(ctx.Response.Header.StatusCode()),
 			end.Sub(begin),
 		)
-	})
+	}
 }
 
 // Combined format:
 // [<time>] <remote-addr> | <real-remote-ip> | <HTTP/http-version> | <method> <url> - <status> - <response-time us> | <user-agent>
 // [2017/05/31 - 13:27:28] 127.0.0.1:54082 | HTTP/1.1 | GET /hello - 200 - 48.279µs | Paw/3.1.1 (Macintosh; OS X/10.12.5) GCDHTTPRequest
 func Combined(req fasthttp.RequestHandler) fasthttp.RequestHandler {
-	return fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
+	return func(ctx *fasthttp.RequestCtx) {
 		begin := time.Now()
 		req(ctx)
 		end := time.Now()
@@ -165,12 +165,12 @@ func Combined(req fasthttp.RequestHandler) fasthttp.RequestHandler {
 			end.Sub(begin),
 			ctx.UserAgent(),
 		)
-	})
+	}
 }
 
 // CombinedColored is same as Combined but colored
 func CombinedColored(req fasthttp.RequestHandler) fasthttp.RequestHandler {
-	return fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
+	return func(ctx *fasthttp.RequestCtx) {
 		begin := time.Now()
 		req(ctx)
 		end := time.Now()
@@ -185,5 +185,5 @@ func CombinedColored(req fasthttp.RequestHandler) fasthttp.RequestHandler {
 			end.Sub(begin),
 			ctx.UserAgent(),
 		)
-	})
+	}
 }

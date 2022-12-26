@@ -64,30 +64,7 @@ def get_dates_between(start_date, end_date) -> List[str]:
 
 
 def main():
-    text = """
-从官网复制带有标题的完整通知，如 http://www.gov.cn/fuwu/2022-12/08/content_5730853.htm
-国务院办公厅关于2023年部分节假日安排的通知
-各省、自治区、直辖市人民政府，国务院各部委、各直属机构：
-
-经国务院批准，现将2023年元旦、春节、清明节、劳动节、端午节、中秋节和国庆节放假调休日期的具体安排通知如下。
-
-一、元旦：2022年12月31日至2023年1月2日放假调休，共3天。
-
-二、春节：1月21日至27日放假调休，共7天。1月28日（星期六）、1月29日（星期日）上班。
-
-三、清明节：4月5日放假，共1天。
-
-四、劳动节：4月29日至5月3日放假调休，共5天。4月23日（星期日）、5月6日（星期六）上班。
-
-五、端午节：6月22日至24日放假调休，共3天。6月25日（星期日）上班。
-
-六、中秋节、国庆节：9月29日至10月6日放假调休，共8天。10月7日（星期六）、10月8日（星期日）上班。
-
-节假日期间，各地区、各部门要妥善安排好值班和安全、保卫、疫情防控等工作，遇有重大突发事件，要按规定及时报告并妥善处置，确保人民群众祥和平安度过节日假期。
-
-国务院办公厅
-2022年12月8日
-"""
+    text = get_input()
     matches = re.search(r"(\d{4}).*节假日安排的通知", text)
     year = 0
     if not matches:
@@ -138,7 +115,6 @@ def main():
                         "type": "补班日",
                         "note": holiday_name + "补班"
                     }
-            # holiday_text_list.append(line)
     with open(f"holiday_{year}.json", "w+", encoding="utf8") as output_file:
         output_file.write(json.dumps(results, ensure_ascii=False, indent=2))
 
