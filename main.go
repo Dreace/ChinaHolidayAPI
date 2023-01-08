@@ -25,7 +25,7 @@ func isHoliday(date time.Time) (bool, string, string) {
 		if holiday.Type == "假日" {
 			return true, "假日", holiday.Note
 		} else {
-			return false, "补班日", "补班工作日"
+			return false, "工作日", "补班工作日"
 		}
 	} else {
 		if date.Weekday() == time.Saturday || date.Weekday() == time.Sunday {

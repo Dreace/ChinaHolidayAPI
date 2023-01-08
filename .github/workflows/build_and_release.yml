@@ -40,5 +40,5 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./ChinaHolidayAPI
-        asset_name: ChinaHolidayAPI_${{ github.ref }}
+        asset_name: ChinaHolidayAPI_${{ github.ref_name }}
         asset_content_type: application/octet-stream
