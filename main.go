@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	_ "embed"
 	"encoding/json"
 	"fmt"
@@ -9,15 +10,15 @@ import (
 	"time"
 )
 
-//go:embed holiday.json
-var holidayData []byte
+//go:embed holidays/*.json
+var holidayFiles embed.FS
 
 type Holiday struct {
 	Type string `json:"type"`
 	Note string `json:"note"`
 }
 
-var holidays map[string]Holiday
+var holidays = make(map[string]Holiday)
 
 func isHoliday(date time.Time) (bool, string, string) {
 	dateString := date.Format("2006-01-02")
@@ -74,11 +75,32 @@ func main() {
 
 	pflag.Parse()
 
-	err := json.Unmarshal(holidayData, &holidays)
+	dirEntries, err := holidayFiles.ReadDir("holidays")
 	if err != nil {
-		output.Fatalf("%v", err)
-		return
+		panic(err)
 	}
+
+	// Iterate through the embedded files
+	for _, entry := range dirEntries {
+		if !entry.IsDir() && entry.Type().IsRegular() {
+			filePath := "holidays/" + entry.Name()
+			data, err := holidayFiles.ReadFile(filePath)
+			if err != nil {
+				panic(err)
+			}
+
+			var itemList map[string]Holiday
+			err = json.Unmarshal(data, &itemList)
+			if err != nil {
+				panic(err)
+			}
+
+			for k, v := range itemList {
+				holidays[k] = v
+			}
+		}
+	}
+
 	output.Printf("listen on http://%s:%d", host, port)
 	err = fasthttp.ListenAndServe(fmt.Sprintf("%s:%d", host, port), ShortColored(holidayHandler))
 	if err != nil {
