@@ -1,4 +1,15 @@
 ## 介绍
+<p align="center">
+    <img alt="Dynamic JSON Badge" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fholiday.dreace.top%2Fstats&query=%24.requestCount.daily&label=%E6%9C%8D%E5%8A%A1%E6%AC%A1%E6%95%B0%EF%BC%88%E5%A4%A9%EF%BC%89&cacheSeconds=3600">
+    <img alt="Dynamic JSON Badge" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fholiday.dreace.top%2Fstats&query=%24.requestCount.monthly&label=%E6%9C%8D%E5%8A%A1%E6%AC%A1%E6%95%B0%EF%BC%88%E6%9C%88%EF%BC%89&cacheSeconds=86400">
+    <img alt="Dynamic JSON Badge" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fholiday.dreace.top%2Fstats&query=%24..years%5B-1%3A%5D&label=%E6%9B%B4%E6%96%B0%E5%88%B0&color=orange&cacheSeconds=86400">
+    <img alt="Dynamic JSON Badge" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fholiday.dreace.top&query=%24.date&label=date&color=red&cacheSeconds=86400">
+    <img alt="Dynamic JSON Badge" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fholiday.dreace.top&query=%24.isHoliday&label=date&color=green&cacheSeconds=86400">
+    <img alt="Dynamic JSON Badge" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fholiday.dreace.top&query=%24.type&label=date&color=blue&cacheSeconds=86400">
+    <img alt="Dynamic JSON Badge" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fholiday.dreace.top&query=%24.note&label=date&color=yellow&cacheSeconds=86400">
+</p>
+
+
 
 提供 HTTP 服务（Go）查询当前或指定日期是否为假日，返回中区分了假日、工作日。可以用于在特定日期类型完成自动化，比如使用 iOS 的快捷指令自动记录基金定投等。
 
