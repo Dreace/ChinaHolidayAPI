@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/spf13/pflag"
 	"github.com/valyala/fasthttp"
+	"sort"
+	"sync"
 	"time"
 )
 
@@ -19,6 +21,56 @@ type Holiday struct {
 }
 
 var holidays = make(map[string]Holiday)
+
+type APIStats struct {
+	Daily   sync.Map // YYYY-MM-DD
+	Monthly sync.Map // YYYY-MM
+	Years   []string
+}
+
+type APIStatsResponse struct {
+	RequestCount struct {
+		Daily   int `json:"daily"`
+		Monthly int `json:"monthly"`
+	} `json:"requestCount"`
+	Years []string `json:"years"`
+}
+
+var stats = APIStats{}
+
+func recordRequest() {
+	today := time.Now().Format("2006-01-02")
+	month := time.Now().Format("2006-01")
+
+	// 清理过期的每日数据
+	stats.Daily.Range(func(key, value interface{}) bool {
+		if key.(string) != today {
+			stats.Daily.Delete(key)
+		}
+		return true
+	})
+
+	// 清理过期的每月数据
+	stats.Monthly.Range(func(key, value interface{}) bool {
+		if key.(string) != month {
+			stats.Monthly.Delete(key)
+		}
+		return true
+	})
+
+	// 更新或初始化今天的计数
+	increment(&stats.Daily, today)
+
+	// 更新或初始化本月的计数
+	increment(&stats.Monthly, month)
+}
+
+func increment(m *sync.Map, key string) {
+	val, _ := m.LoadOrStore(key, 0)
+	if count, ok := val.(int); ok {
+		m.Store(key, count+1)
+	}
+}
 
 func isHoliday(date time.Time) (bool, string, string) {
 	dateString := date.Format("2006-01-02")
@@ -38,6 +90,7 @@ func isHoliday(date time.Time) (bool, string, string) {
 }
 
 func holidayHandler(ctx *fasthttp.RequestCtx) {
+	recordRequest()
 	code := fasthttp.StatusOK
 	message := map[string]any{}
 	defer func() {
@@ -67,6 +120,34 @@ func holidayHandler(ctx *fasthttp.RequestCtx) {
 	message["note"] = note
 }
 
+func statsHandler(ctx *fasthttp.RequestCtx) {
+	response := APIStatsResponse{}
+
+	// 每日统计
+	stats.Daily.Range(func(key, value interface{}) bool {
+		response.RequestCount.Daily = value.(int)
+		return true
+	})
+
+	// 每月统计
+	stats.Monthly.Range(func(key, value interface{}) bool {
+		response.RequestCount.Monthly = value.(int)
+		return true
+	})
+	response.Years = stats.Years
+
+	// 将统计信息编码为JSON
+	jsonResponse, err := json.Marshal(response)
+	if err != nil {
+		ctx.Error("Error generating JSON", fasthttp.StatusInternalServerError)
+		return
+	}
+
+	// 设置响应类型为JSON
+	ctx.SetContentType("application/json")
+	fmt.Fprintf(ctx, "%s", jsonResponse)
+}
+
 func main() {
 	var host string
 	var port int
@@ -80,9 +161,12 @@ func main() {
 		panic(err)
 	}
 
+	years := make([]string, 0)
 	// Iterate through the embedded files
 	for _, entry := range dirEntries {
 		if !entry.IsDir() && entry.Type().IsRegular() {
+			yearName := entry.Name()[:4]
+			years = append(years, yearName)
 			filePath := "holidays/" + entry.Name()
 			data, err := holidayFiles.ReadFile(filePath)
 			if err != nil {
@@ -100,9 +184,22 @@ func main() {
 			}
 		}
 	}
+	sort.Strings(years)
+	stats.Years = years
 
 	output.Printf("listen on http://%s:%d", host, port)
-	err = fasthttp.ListenAndServe(fmt.Sprintf("%s:%d", host, port), ShortColored(holidayHandler))
+
+	m := func(ctx *fasthttp.RequestCtx) {
+		switch string(ctx.Path()) {
+		case "/stats":
+			statsHandler(ctx)
+			break
+		default:
+			holidayHandler(ctx)
+		}
+	}
+
+	err = fasthttp.ListenAndServe(fmt.Sprintf("%s:%d", host, port), ShortColored(m))
 	if err != nil {
 		output.Fatalf("%v", err)
 	}
