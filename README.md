@@ -17,7 +17,7 @@
 
 可以自行从 [Releases](https://github.com/Dreace/ChinaHolidayAPI/releases) 下载可执行文件并部署，或直接访问 [https://holiday.dreace.top](https://holiday.dreace.top) 查询假日。
 
-目前可以查询 2023 至 2024 年的假期数据。
+目前可以查询 2023 至 2025 年的假期数据。
 
 ## 启动参数
 
