@@ -87,6 +87,7 @@ fabric.properties
 *.dll
 *.so
 *.dylib
+china-holiday-api
 
 # Test binary, built with `go test -c`
 *.test

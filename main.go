@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/valyala/fasthttp"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 )
@@ -148,6 +149,93 @@ func statsHandler(ctx *fasthttp.RequestCtx) {
 	fmt.Fprintf(ctx, "%s", jsonResponse)
 }
 
+func generateICS() string {
+	currentYear := time.Now().Year()
+	previousYear := currentYear - 1
+	
+	location, _ := time.LoadLocation("Asia/Shanghai")
+	now := time.Now().In(location)
+	
+	var icsBuilder strings.Builder
+	icsBuilder.WriteString("BEGIN:VCALENDAR\r\n")
+	icsBuilder.WriteString("VERSION:2.0\r\n")
+	icsBuilder.WriteString("PRODID:-//ChinaHolidayAPI//Holiday Calendar//CN\r\n")
+	icsBuilder.WriteString("CALSCALE:GREGORIAN\r\n")
+	icsBuilder.WriteString("X-WR-CALNAME:中国法定节假日\r\n")
+	icsBuilder.WriteString("X-WR-CALDESC:中国法定节假日和调休补班信息\r\n")
+	icsBuilder.WriteString("X-WR-TIMEZONE:Asia/Shanghai\r\n")
+	
+	// Create a sorted list of dates
+	var dateKeys []string
+	for dateKey := range holidays {
+		// Parse the date to check if it's in the target years
+		if date, err := time.ParseInLocation("2006-01-02", dateKey, location); err == nil {
+			year := date.Year()
+			if year == previousYear || year == currentYear {
+				dateKeys = append(dateKeys, dateKey)
+			}
+		}
+	}
+	sort.Strings(dateKeys)
+	
+	// Generate events for each holiday
+	for _, dateKey := range dateKeys {
+		holiday := holidays[dateKey]
+		date, _ := time.ParseInLocation("2006-01-02", dateKey, location)
+		
+		// Create unique UID
+		uid := fmt.Sprintf("%s@chinaholidayapi.com", strings.ReplaceAll(dateKey, "-", ""))
+		
+		// Format the date as YYYYMMDD
+		dateFormatted := date.Format("20060102")
+		
+		// Create the event
+		icsBuilder.WriteString("BEGIN:VEVENT\r\n")
+		icsBuilder.WriteString(fmt.Sprintf("UID:%s\r\n", uid))
+		icsBuilder.WriteString(fmt.Sprintf("DTSTART;VALUE=DATE:%s\r\n", dateFormatted))
+		icsBuilder.WriteString(fmt.Sprintf("DTEND;VALUE=DATE:%s\r\n", dateFormatted))
+		icsBuilder.WriteString(fmt.Sprintf("DTSTAMP:%s\r\n", now.Format("20060102T150405Z")))
+		
+		// Set summary based on holiday type
+		var summary string
+		if holiday.Type == "假日" {
+			summary = fmt.Sprintf("🎉 %s", holiday.Note)
+		} else if holiday.Type == "补班日" {
+			summary = fmt.Sprintf("💼 %s", holiday.Note)
+		} else {
+			summary = holiday.Note
+		}
+		
+		icsBuilder.WriteString(fmt.Sprintf("SUMMARY:%s\r\n", summary))
+		icsBuilder.WriteString(fmt.Sprintf("DESCRIPTION:类型: %s\\n说明: %s\r\n", holiday.Type, holiday.Note))
+		
+		// Add category
+		if holiday.Type == "假日" {
+			icsBuilder.WriteString("CATEGORIES:假日\r\n")
+		} else if holiday.Type == "补班日" {
+			icsBuilder.WriteString("CATEGORIES:补班日\r\n")
+		}
+		
+		icsBuilder.WriteString("END:VEVENT\r\n")
+	}
+	
+	icsBuilder.WriteString("END:VCALENDAR\r\n")
+	return icsBuilder.String()
+}
+
+func icsHandler(ctx *fasthttp.RequestCtx) {
+	recordRequest()
+	
+	icsContent := generateICS()
+	
+	// Set appropriate headers for ICS file
+	ctx.SetContentType("text/calendar; charset=utf-8")
+	ctx.Response.Header.Set("Content-Disposition", "attachment; filename=\"china-holidays.ics\"")
+	ctx.Response.Header.Set("Cache-Control", "public, max-age=3600")
+	
+	ctx.SetBodyString(icsContent)
+}
+
 func main() {
 	var host string
 	var port int
@@ -193,6 +281,9 @@ func main() {
 		switch string(ctx.Path()) {
 		case "/stats":
 			statsHandler(ctx)
+			break
+		case "/ics":
+			icsHandler(ctx)
 			break
 		default:
 			holidayHandler(ctx)
